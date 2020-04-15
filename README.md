@@ -150,3 +150,4 @@ docker run --name="motioneye"  \
 ## References
 
 * [Raspberry Pi Camera Streaming](https://tutorials-raspberrypi.com/raspberry-pi-security-camera-livestream-setup/)
+* [RTSP URL for HikVision Cameras](https://www.use-ip.co.uk/forum/threads/hikvision-rtsp-stream-urls.890/)
