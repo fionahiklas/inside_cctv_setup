@@ -1,3 +1,4 @@
+
 ## Overview
 
 When we got a dog I thought it might be a good idea to see what she was doing while we were at work or at 
@@ -6,8 +7,12 @@ enough otherwise she wouldn't have destroyed two expensive CDs that came through
 coats that were hanging up!
 
 Anyway, I did finally get a basic setup using [zoneminder](https://zoneminder.com) working but found this to 
-be a bit flaky and unreliable as well as seeming like an awful lot of services/facilities when all I 
-needed was a really simple UI and video/recording.
+be a bit flaky and unreliable (issues with the cheapo cameras I was using and complexity of the setup) but more 
+importantly it was too complicated for the simple needs that I have.
+
+Instead I've switched to using [motioneye](https://github.com/ccrisan/motioneye/wiki) as this is a much simpler 
+application but provides just enough features.  
+
 
 ## Setup
 
@@ -22,14 +27,14 @@ needed was a really simple UI and video/recording.
                                          +-------+--------+
                                          |      CCTV      |
                                          |     Server     |
-                                         |     (APU2)     |
-                                         +--------+-------+
-                                                  |
-                                                  |
-                                                  |
-                                     +------------+-------------+
-           +-------------------------+   8-Port Switch with     |
-           |                +--------+       4-port PoE         +----------+
+                                         |                |
+                                         +-----+--+-------+
+                                               |  |
+                                               |  |_____  To another PoE switch
+                                               |
+                                     +---------+----------------+
+           +-------------------------+       POE Switch         |
+           |                +--------+                          +----------+
            |                |        +--------------+-----------+          |
            |                |                       |                      |
         ---+---          ---+---                    |                      |
@@ -46,7 +51,7 @@ needed was a really simple UI and video/recording.
 
 #### CCTV Server
 
-This is a PC Engines [APU2](https://www.pcengines.ch/apu2.htm) with 4Gb memory 240Gb SSD and an attached
+This started out as a PC Engines [APU2](https://www.pcengines.ch/apu2.htm) with 4Gb memory 240Gb SSD and an attached
 1Tb HDD for storing images/video from the CCTV.
 
 The APU2 has three NICs which allows connection to the home network and cameras to be physically seperate
@@ -59,11 +64,19 @@ rest of the devices I have in the house.
 
 The CCTV server is running Ubuntu 18.04 LTS Server.
 
+As of writing I'm now upgrading to using a home-built PC, AMD Phenom X6, 12Gb memory, 500Gb for boot drive and two 
+further 500Gb HDD for video/images.  The reason for the upgrade is that I'm expanding the CCTV to cover outside as 
+well as in and the APU2 is running at 300% CPU and response on the UI is slow.
+
+
 #### Network switch 
 
-This is a [Netgear GS108PEv3](https://www.amazon.co.uk/NETGEAR-GS108PEv3-Power-Over-Ethernet-Lifetime-Protection/dp/B00LMXBOG8/ref=sr_1_3?keywords=nether+8+port+PoE&qid=1562046271&s=gateway&sr=8-3)
+Originally I was using a [Netgear GS108PEv3](https://www.amazon.co.uk/NETGEAR-GS108PEv3-Power-Over-Ethernet-Lifetime-Protection/dp/B00LMXBOG8/ref=sr_1_3?keywords=nether+8+port+PoE&qid=1562046271&s=gateway&sr=8-3)
 
 The four PoE ports are used to power the cameras and Raspberry Pi's
+
+I've now switched (no pun intended) to using two [Netgear GS503P](https://www.amazon.co.uk/NETGEAR-Gigabit-Ethernet-Internet-Splitter/dp/B072BDGQR8/ref=redir_mobile_desktop?ie=UTF8&aaxitk=vHZTFEIydaJReqxvAAobuw&hsa_cr_id=2001183330402&ref_=sb_s_sparkle) switches which means I can run a max of 8 cameras (currently have 5, will be adding more later).
+
 
 #### Cameras
 
@@ -74,6 +87,9 @@ Both of these are 1080p and include automatic night vision - essentially they sw
 the light level drops, you can here the small click of a relay when this happens.
 
 These are simply setup to stream data, I'm not making use of any other features on these cameras.
+
+I've also got three Hikvision cameras from my old outside CCTV system that was professional wired in (and then rather 
+unprofessionally unwired by me when we moved house)
 
 
 #### Raspberry Pi's
@@ -88,12 +104,44 @@ It would be much better now to use [Raspberry Pi 3 Model B+](https://www.raspber
 
 ## Configuration
 
-### Raspberry Pi's
+### Server Network
 
+Ubuntu 18.04 uses [netplan](https://netplan.io) the configuration files for the main network interface 
+(`enp6s0`) and the two further connections (`enp5s0` and `enp4s0`) which form a bridge are under 
+`server/etc/netplan`
+
+
+### Iptables
+
+To prevent the cameras from talking via the server to the internet or internal network I've added firewall 
+rules to restrict the traffic.  These can be found under `server/etc/iptables`.
 
 
 ### CCTV Software
 
+
+#### Running
+
+Motioneye can be Docker
+
+Run the following command
+
+```
+docker run --name="motioneye"  \
+ -p 8765:8765 --user 3010:3010 \
+ --hostname="motioneye" \
+ -v /etc/localtime:/etc/localtime:ro \
+ -v /home/motioneye/etc:/etc/motioneye \ 
+ -v /home/motioneye/var/run:/var/run \
+ -v /home/motioneye/var/log:/var/log \
+ -v /vol/events/motioneye:/var/lib/motioneye \
+ --restart="always" \
+ --detach=true \ 
+ ccrisan/motioneye:master-amd64
+```
+
+
+### Raspberry Pi's
 
 
 
