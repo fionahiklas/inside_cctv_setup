@@ -13,6 +13,10 @@ importantly it was too complicated for the simple needs that I have.
 Instead I've switched to using [motioneye](https://github.com/ccrisan/motioneye/wiki) as this is a much simpler 
 application but provides just enough features.  
 
+Update: I've also migrated away from using the single board computer (SBC) that was previously running things 
+(a [PCEngines APU2](https://www.pcengines.ch/apu2e4.htm)) as this can't cope with 4 video cameras at all.  Now using 
+Raspberry Pi 4 devices 
+
 
 ## Setup
 
@@ -21,29 +25,31 @@ application but provides just enough features.
 
 ```
                                             Home Network
-
-                                                 |
-                                                 | 
-                                         +-------+--------+
-                                         |      CCTV      |
-                                         |     Server     |
-                                         |                |
-                                         +-----+--+-------+
-                                               |  |
-                                               |  |_____  To another PoE switch
-                                               |
-                                     +---------+----------------+
-           +-------------------------+       POE Switch         |
-           |                +--------+                          +----------+
-           |                |        +--------------+-----------+          |
-           |                |                       |                      |
-        ---+---          ---+---                    |                      |
-      -/       \-      -/       \-                  |                      |
-     /   Dome    \    /  Bullet   \           +-----+-----+          +-----+-----+
-     |  Camera   |    |  Camera   |           | Raspberry |          | Raspberry |
-     \           /    \           /           |   Pi 2    |          |   Pi 2    |
-      -\       /-      -\       /-            +-----------+          +-----------+
-        -------          -------
+                                                  |
+                                 +----------------+-------------+--------------------------------+----------- .....
+                                 |                              |                                |
+                                 |                              |                                |
+                         +-------+--------+             +-------+--------+               +-------+--------+
+                         |   Tweedledum   |             |   Tweedledum   |               |   Tweedledum   |     
+                         |  Raspberry Pi  |             |  Raspberry Pi  |               |  Raspberry Pi  |   ...... 
+                         +-------+--------+             +-------+--------+               +-------+--------+ 
+                                 |                              |                                |
+                                 |         +--------------------+                  +-------------+
+                                 |         |                                       |         +------------------- ....
+                                 |         |                                       |         |
+                       +---------+---------+-----+                       +---------+---------+-----+
+                       |                         |                       |                         |   
+           +-----------+        POE Switch       |                       |        POE Switch       |
+           |           |                         |                       |                         |
+           |           +----+----+--------+-----+                        +--------+----+-----------+
+           |                |    |        |                                       |    |
+           |                |    |        +--------------------+                  |    |
+           |                |    +------------+                |                  |    +---------------+
+           |                |                 |                |                  |                    |
+     +-----+-----+    +-----+-----+     +-----+-----+    +-----+-----+     +------+------+     +-------+------+
+     |  Internal |    |  Internal |     |  External |    |  External |     |  Internal   |     |  Internal    |
+     |  Camera 1 |    |  Camera 2 |     |  Camera 3 |    |  Camera 4 |     | RPi Camera 1|     | RPi Camera 2 |
+     +-----------+    +-----------+     +-----------+    +-----------+     +-------------+     +--------------+
 ```
 
 
@@ -144,6 +150,14 @@ docker run --name="motioneye"  \
 ### Raspberry Pi's
 
 
+
+
+
+## Notes
+
+### Recording with VLC
+
+As an interim measure it's possible to [record an RTSP stream with VLC](https://confluence.bethel.edu/display/ITSKB/Recording+a+Network+Stream+with+VLC+Player)
 
 
 
