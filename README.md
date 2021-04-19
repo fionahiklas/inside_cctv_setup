@@ -1,4 +1,3 @@
-
 ## Overview
 
 When we got a dog I thought it might be a good idea to see what she was doing while we were at work or at 
@@ -15,10 +14,11 @@ application but provides just enough features.
 
 Update: I've also migrated away from using the single board computer (SBC) that was previously running things 
 (a [PCEngines APU2](https://www.pcengines.ch/apu2e4.htm)) as this can't cope with 4 video cameras at all.  Now using 
-Raspberry Pi 4 devices 
+Raspberry Pi 4 devices as these seem to handle video better (built in support for H264 encoding/decoding) and work out
+cheaper also.  
 
 
-## Setup
+## Architecture
 
 ### Topology
 
@@ -57,31 +57,13 @@ Raspberry Pi 4 devices
 
 #### CCTV Server
 
-This started out as a PC Engines [APU2](https://www.pcengines.ch/apu2.htm) with 4Gb memory 240Gb SSD and an attached
-1Tb HDD for storing images/video from the CCTV.
-
-The APU2 has three NICs which allows connection to the home network and cameras to be physically seperate
-and for traffic between these to be blocked.  The reason for this paranoia is that I bought cheap IP cameras
-and I simply didn't trust that they would be secure or stable enough.
-
-A further reason for this setup is to minimise network traffic on my home network - with 4 cameras there is 
-quite alot of data flowing through the Switch and I really don't want that soaking up bandwidth from the 
-rest of the devices I have in the house.
-
-The CCTV server is running Ubuntu 18.04 LTS Server.
-
-As of writing I'm now upgrading to using a home-built PC, AMD Phenom X6, 12Gb memory, 500Gb for boot drive and two 
-further 500Gb HDD for video/images.  The reason for the upgrade is that I'm expanding the CCTV to cover outside as 
-well as in and the APU2 is running at 300% CPU and response on the UI is slow.
+Using two Raspberry Pi 4 Model B 2Gb devices and one currently one 4Gb.  Intend to add another 2Gb device.
 
 
 #### Network switch 
 
-Originally I was using a [Netgear GS108PEv3](https://www.amazon.co.uk/NETGEAR-GS108PEv3-Power-Over-Ethernet-Lifetime-Protection/dp/B00LMXBOG8/ref=sr_1_3?keywords=nether+8+port+PoE&qid=1562046271&s=gateway&sr=8-3)
-
-The four PoE ports are used to power the cameras and Raspberry Pi's
-
-I've now switched (no pun intended) to using two [Netgear GS503P](https://www.amazon.co.uk/NETGEAR-Gigabit-Ethernet-Internet-Splitter/dp/B072BDGQR8/ref=redir_mobile_desktop?ie=UTF8&aaxitk=vHZTFEIydaJReqxvAAobuw&hsa_cr_id=2001183330402&ref_=sb_s_sparkle) switches which means I can run a max of 8 cameras (currently have 5, will be adding more later).
+Using two [Netgear GS503P](https://www.amazon.co.uk/NETGEAR-Gigabit-Ethernet-Internet-Splitter/dp/B072BDGQR8/ref=redir_mobile_desktop?ie=UTF8&aaxitk=vHZTFEIydaJReqxvAAobuw&hsa_cr_id=2001183330402&ref_=sb_s_sparkle) 
+switches which means I can run a max of 8 cameras (currently have 6, will be adding the remaining two later).
 
 
 #### Cameras
@@ -98,7 +80,9 @@ I've also got three Hikvision cameras from my old outside CCTV system that was p
 unprofessionally unwired by me when we moved house)
 
 
-#### Raspberry Pi's
+#### Raspberry Pi Cameras
+
+I have these ready to be setup but currently not connected.
 
 These are [Raspberry Pi 2 Model B](https://www.amazon.co.uk/Raspberry-Pi-Model-Desktop-Linux/dp/B00T2U7R7I/ref=sr_1_4?keywords=Raspberry+Pi+2&qid=1562046592&s=electronics&sr=1-4) devices.
 
@@ -108,27 +92,87 @@ It would be much better now to use [Raspberry Pi 3 Model B+](https://www.raspber
 
 
 
-## Configuration
+## Setup
 
-### Server Network
+### Initial Setup
 
-Ubuntu 18.04 uses [netplan](https://netplan.io) the configuration files for the main network interface 
-(`enp6s0`) and the two further connections (`enp5s0` and `enp4s0`) which form a bridge are under 
-`server/etc/netplan`
+Each Raspberry Pi server has a standard Raspbian (buster) install with SSH enabled.
 
 
-### Iptables
+### Install Software
 
-To prevent the cameras from talking via the server to the internet or internal network I've added firewall 
-rules to restrict the traffic.  These can be found under `server/etc/iptables`.
+#### Packages
+
+Run the following commands to install the required packages
+
+```
+apt install autofs iptables iptables-persistent
+```
 
 
-### CCTV Software
+#### Docker
+
+Run the following as root 
+
+```
+apt install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+
+echo "deb [arch=armhf] https://download.docker.com/linux/raspbian/ $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+apt update
+apt install docker-ce docker-ce-cli containerd.io
+```
+
+### Configuration
+
+#### Autofs
+
+Insert a flash, external SSD/HDD, or other storage drive into a USB3 port and then partition with `fdisk`.  There 
+should be a single partition taking up the entire disk.  Format using the following command
+
+```
+mkfs -t ext4 /dev/sda1
+```
+
+This will give output similar to the following
+
+```
+mke2fs 1.44.5 (15-Dec-2018)
+Creating filesystem with 30043904 4k blocks and 7512064 inodes
+Filesystem UUID: b9bc6b4c-dd6a-4a60-aa0d-d41e45ba9963
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000, 7962624, 11239424, 20480000, 23887872
+
+Allocating group tables: done                            
+Writing inode tables: done                            
+Creating journal (131072 blocks): done
+Writing superblocks and filesystem accounting information: done  
+```
+
+Make a note of the `Filesystem UUID`, then create the `/etc/auto.vol` file (see the contents under 
+`server/etc/auto.vol`) and insert that UUID value into this file.  Relying on `/dev` names for volumes just 
+doesn't seem to work very well, hence the use of UUID.
+
+Also create the file `/etc/auto.master.d/vol.autofs` with the contents from the matching file in this 
+repository: `server/etc/auto.master.d/vol.autofs`
+
+Create the `/vol` directory then reload autofs, using these commands
+
+```
+mkdir /vol
+systemctl enable autofs
+syatemctl restart autofs
+```
+
+You should now be able to check the existence of the mount and filesystem using `ls /vol/events` - it should only 
+show the `lost+found` directory at the moment.  The `df -h /vol/events` command should report the size of the FS
 
 
-#### Running
 
-Motioneye can be Docker
+## Running Motioneye
+
+Motioneye can be run from Docker
 
 Run the following command
 

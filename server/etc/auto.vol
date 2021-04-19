@@ -1,0 +1,1 @@
+events	-fstype=ext4	UUID=<enter UUID for formatted FS here>
