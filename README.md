@@ -98,6 +98,13 @@ It would be much better now to use [Raspberry Pi 3 Model B+](https://www.raspber
 
 Each Raspberry Pi server has a standard Raspbian (buster) install with SSH enabled.
 
+Also make sure that WiFi and bluetooth are disabled
+
+```
+rfkill block wifi
+rfkill block bluetooth
+```
+
 
 ### Install Software
 
@@ -166,9 +173,31 @@ syatemctl restart autofs
 ```
 
 You should now be able to check the existence of the mount and filesystem using `ls /vol/events` - it should only 
-show the `lost+found` directory at the moment.  The `df -h /vol/events` command should report the size of the FS
+show the `lost+found` directory at the moment.  The `df -h /vol/events` command should report the size of the 
+filesystem.
+
+#### Firewall setup
+
+I don't trust the cameras to not be trying to connect cloud infrastructure or other dubious activites so I'm being
+ultra paranoid and locking the networking down (hopefuly) so only the operations that are needed are permitted.
+
+Copy the `server/etc/iptables/rules.v4` file to `/etc/iptables/` directory.  Then run the following command as root
+
+```
+iptables-restore /etc/iptables/rules.v4
+```
+
+NOTE: It would be a *REALLY* good idea to have a serial console connection to the Raspberry Pi before mucking 
+around with firewall rules, just in case something goes wrong.
 
 
+#### Creating Motioneye User
+
+Run the following commands
+
+```
+
+```
 
 ## Running Motioneye
 
