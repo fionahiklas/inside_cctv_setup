@@ -232,7 +232,9 @@ docker run --name="motioneye"  \
 
 As an interim measure it's possible to [record an RTSP stream with VLC](https://confluence.bethel.edu/display/ITSKB/Recording+a+Network+Stream+with+VLC+Player)
 
+For Hikvision Camera URL is `rtsp://<ip>:554/11`
 
+For Newer SV3C Camera URL is `rtsp://<ip>:554/Streaming/Channel/101`
 
 ## References
 
