@@ -198,6 +198,7 @@ Run the following commands
 ```
 groupadd -g 3010 motioneye
 useradd -u 3010 -g 3010 -m -c "Motion Eye user" -d /home/motioneye motioneye
+
 ```
 
 
@@ -223,13 +224,13 @@ Copy all the of the files under `server/home/motioneye/etc/<machine>` to `/home/
 
 ## Running Motioneye
 
-Motioneye can be run from Docker
-
-Run the following command
+Motioneye can be run from Docker even on Raspberry Pi, run the following command
 
 ```
 docker run --name="motioneye"  \
- -p 8765:8765 --user 3010:3010 \
+ -p 8081:8081 \
+ -p 8765:8765 \
+ --user 3010:3010 \
  --hostname="motioneye" \
  -v /etc/localtime:/etc/localtime:ro \
  -v /home/motioneye/etc:/etc/motioneye \ 
@@ -238,7 +239,7 @@ docker run --name="motioneye"  \
  -v /vol/events/motioneye:/var/lib/motioneye \
  --restart="always" \
  --detach=true \ 
- ccrisan/motioneye:master-amd64
+ ccrisan/motioneye:master-armhf
 ```
 
 
