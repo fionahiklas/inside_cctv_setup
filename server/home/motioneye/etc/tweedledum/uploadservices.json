@@ -1,0 +1,22 @@
+{
+    "1": {
+        "gdrive": {
+            "authorization_key": "GoogleAuthKey", 
+            "credentials": {
+                "access_token": "GoogleAccessToken", 
+                "refresh_token": "GoogleRefreshToken"
+            }, 
+            "location": "Cameras/01-Dome"
+        }
+    }, 
+    "2": {
+        "gdrive": {
+            "authorization_key": "GoogleAuthKey", 
+            "credentials": {
+                "access_token": "GoogleAccessToken", 
+                "refresh_token": "GoogleRefreshToken"
+            }, 
+            "location": "Cameras/02-Bullet"
+        }
+    }
+}

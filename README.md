@@ -15,7 +15,7 @@ application but provides just enough features.
 Update: I've also migrated away from using the single board computer (SBC) that was previously running things 
 (a [PCEngines APU2](https://www.pcengines.ch/apu2e4.htm)) as this can't cope with 4 video cameras at all.  Now using 
 Raspberry Pi 4 devices as these seem to handle video better (built in support for H264 encoding/decoding) and work out
-cheaper also.  
+cheaper also.
 
 
 ## Architecture
@@ -30,7 +30,7 @@ cheaper also.
                                  |                              |                                |
                                  |                              |                                |
                          +-------+--------+             +-------+--------+               +-------+--------+
-                         |   Tweedledum   |             |   Tweedledum   |               |   Tweedledum   |     
+                         |   Tweedledum   |             |   Tweedledee   |               |   Whiterabbit  |     
                          |  Raspberry Pi  |             |  Raspberry Pi  |               |  Raspberry Pi  |   ...... 
                          +-------+--------+             +-------+--------+               +-------+--------+ 
                                  |                              |                                |
@@ -196,8 +196,30 @@ around with firewall rules, just in case something goes wrong.
 Run the following commands
 
 ```
+groupadd -g 3010 motioneye
+useradd -u 3010 -g 3010 -m -c "Motion Eye user" -d /home/motioneye motioneye
+```
+
+
+#### Create Motioneye home files
+
+First become the `motioneye` user
 
 ```
+sudo bash -l
+su - motioneye
+```
+
+Next create the var filesystem
+
+```
+mkdir -p var/log
+mkdir -p var/run
+```
+
+Copy all the of the files under `server/home/motioneye/etc/<machine>` to `/home/motioneye/etc` on the server
+
+
 
 ## Running Motioneye
 
@@ -220,8 +242,6 @@ docker run --name="motioneye"  \
 ```
 
 
-### Raspberry Pi's
-
 
 
 
@@ -236,7 +256,22 @@ For Hikvision Camera URL is `rtsp://<ip>:554/11`
 
 For Newer SV3C Camera URL is `rtsp://<ip>:554/Streaming/Channel/101`
 
+
+
+### Core files
+
+Noticed a core file that was dumped by some process under `/home/motioneye/etc` ran the following to see where it came from
+
+```
+file core
+core: ELF 32-bit LSB core file, ARM, version 1 (SYSV), SVR4-style, from '/usr/bin/motion -n -c /etc/motioneye/motion.conf -d 5', real uid: 3010, effective uid: 3010, real gid: 3010, effective gid: 3010, execfn: '/usr/bin/motion', platform: 'v7l'
+```
+
+This has actually come from the container so need to run `gdb /usr/bin/motion /etc/motioneye/core` from there
+
+
 ## References
+
 
 * [Raspberry Pi Camera Streaming](https://tutorials-raspberrypi.com/raspberry-pi-security-camera-livestream-setup/)
 * [RTSP URL for HikVision Cameras](https://www.use-ip.co.uk/forum/threads/hikvision-rtsp-stream-urls.890/)
